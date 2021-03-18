@@ -49,6 +49,7 @@ export const NumberField = ({
   showArrow,
   decimalCharacter = '.',
   thousandCharacter = ',',
+  InputLabelProps,
   variant,
   min,
   max,
@@ -58,6 +59,7 @@ export const NumberField = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [autoNumeric, setAutoNumeric] = useState<AutoNumeric | undefined>(undefined);
   const [prevChangeValue, setPrevChangeValue] = useState<number | undefined>(value);
+  const [innerValue, setInnerValue] = useState<number | undefined>(value);
   const [hover, setHover] = useState<boolean>(false);
   const [focus, setFocus] = useState<boolean>(false);
 
@@ -144,9 +146,11 @@ export const NumberField = ({
         if (typeof newValue !== 'undefined' && !Number.isNaN(newValue)) {
           if (newValue < 10000000000000 && newValue > -10000000000000) {
             autoNumeric.set(newValue);
+            setInnerValue(newValue);
           }
         } else {
           autoNumeric.set('');
+          setInnerValue(undefined);
         }
       }
     },
@@ -246,6 +250,10 @@ export const NumberField = ({
       onKeyUp={() => onKeyUp(getValue())}
       onKeyDown={() => onKeyDown(getValue())}
       variant={variant}
+      InputLabelProps={{
+        shrink: typeof innerValue !== 'undefined',
+        ...InputLabelProps,
+      }}
       InputProps={{
         ...InputProps,
         endAdornment: (
