@@ -44,3 +44,16 @@ jobs:
           auth_token: ${{ secrets.npm_token }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  gh-pages:
+    needs: [ npm-publish ]
+    name: gh-pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+      - name: Install dependencies
+        run: yarn
+      - name: deploy github pages
+        run: yarn pages
