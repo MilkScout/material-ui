@@ -53,6 +53,11 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 10.x
+      - name: Download build
+        uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
       - name: Install dependencies
         run: yarn
       - name: deploy github pages
