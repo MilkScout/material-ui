@@ -2,16 +2,23 @@
 
 This package contains common components for https://material-ui.com/.
 
-MilkScout wants to give back to the community.
 
-_Tests & Demo: comming soon :/_
+<img src="https://assets.milkscout.eu/logo/logo.svg" width="300px" />
+
+**MilkScout** want to give something back to the **community**.
+
+usage `npm install @milkscout/material-ui` or `yarn add @milkscout/material-ui`
+
+peer dependency => react, material-ui
+
+<a href="https://milkscout.github.io/material-ui/" target="_blank">Demo</a>
 
 ###NumberField
-
 An Field that composite an textfield https://material-ui.com/components/text-fields/#text-field.
 
 The type of the textfield is freezed to "text". All other attributes are like the from material-ui. Under the hood we
 use http://autonumeric.org/. Because the input is forced to be type="text", there will be a chrome like replacement for arrows.
+
 
 Hints
    - on minus or plus click on keyboard the sign changes
