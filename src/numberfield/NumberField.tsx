@@ -8,6 +8,11 @@ export interface NumberFieldProps extends TextFieldProps {
   value?: number;
   decimalPlaces?: number;
   allowDecimalPadding?: boolean;
+  decimalCharacter: string;
+  thousandCharacter: string;
+  decimalPlacesShownOnBlur?: number | null;
+  modifyValueOnWheel?: boolean;
+  showArrow?: boolean;
   min?: number;
   max?: number;
   step?: number;
@@ -24,13 +29,7 @@ export type TextFieldProps = Omit<
     onKeyPress: (value: number | undefined) => void;
     onKeyUp: (value: number | undefined) => void;
     onKeyDown: (value: number | undefined) => void;
-    allowDecimalPadding?: boolean;
-    decimalPlacesShownOnBlur?: number | null;
-    modifyValueOnWheel?: boolean;
-    showArrow?: boolean;
     variant?: 'outlined' | 'filled' | 'standard';
-    decimalCharacter: string;
-    thousandCharacter: string;
   }>;
 
 export const NumberField = ({
