@@ -138,18 +138,6 @@ export const NumberField = ({
     return undefined;
   }, [autoNumeric, inputRef]);
 
-  useEffect(() => {
-    if (autoNumeric && getValue() !== value) {
-      if (typeof value !== 'undefined' && !Number.isNaN(value)) {
-        if (value < 10000000000000 && value > -10000000000000) {
-          autoNumeric.set(value);
-        }
-      } else {
-        autoNumeric.set('');
-      }
-    }
-  }, [value, autoNumeric, getValue]);
-
   const setValue = useCallback(
     (newValue: number | undefined) => {
       if (autoNumeric) {
@@ -158,12 +146,18 @@ export const NumberField = ({
             autoNumeric.set(newValue);
           }
         } else {
-          autoNumeric.set(null);
+          autoNumeric.set('');
         }
       }
     },
     [autoNumeric],
   );
+
+  useEffect(() => {
+    if (autoNumeric && getValue() !== value) {
+      setValue(value);
+    }
+  }, [value, autoNumeric, getValue]);
 
   const correctValue = useCallback(
     (corValue: number) => {
