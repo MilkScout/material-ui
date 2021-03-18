@@ -7,12 +7,15 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc --build \"./tsconfig.json\"",
-    "postbuild": "npx st-cp package.dist.json dist/package.json && cd dist && npm install --production",
-    "prebuild": "npx st-rm-rf dist"
+    "postbuild": "npx st-cp LICENSE README.md dist && npx st-cp package.dist.json dist/package.json",
+    "prebuild": "npx st-rm-rf dist",
+    "prepages": "cd demo && yarn && yarn build",
+    "pages": "gh-pages -d docs"
   },
   "dependencies": {
     "@material-ui/core": "^4.10.2",
     "autonumeric": "^4.6.0",
+    "gh-pages": "^3.1.0",
     "react": "^16.13.1"
   },
   "devDependencies": {

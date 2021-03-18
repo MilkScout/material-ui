@@ -8,8 +8,8 @@ export interface NumberFieldProps extends TextFieldProps {
   value?: number;
   decimalPlaces?: number;
   allowDecimalPadding?: boolean;
-  decimalCharacter: string;
-  thousandCharacter: string;
+  decimalCharacter?: string;
+  thousandCharacter?: string;
   decimalPlacesShownOnBlur?: number | null;
   modifyValueOnWheel?: boolean;
   showArrow?: boolean;
@@ -46,7 +46,7 @@ export const NumberField = ({
   allowDecimalPadding = false,
   decimalPlacesShownOnBlur = null,
   modifyValueOnWheel = false,
-  showArrow = true,
+  showArrow,
   decimalCharacter = '.',
   thousandCharacter = ',',
   variant,
@@ -57,7 +57,7 @@ export const NumberField = ({
 }: NumberFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [autoNumeric, setAutoNumeric] = useState<AutoNumeric | undefined>(undefined);
-  const [prevChangeValue, setPrevChangeValue] = useState<number | undefined>(undefined);
+  const [prevChangeValue, setPrevChangeValue] = useState<number | undefined>(value);
   const [hover, setHover] = useState<boolean>(false);
   const [focus, setFocus] = useState<boolean>(false);
 
@@ -143,11 +143,9 @@ export const NumberField = ({
       if (typeof value !== 'undefined' && !Number.isNaN(value)) {
         if (value < 10000000000000 && value > -10000000000000) {
           autoNumeric.set(value);
-          setPrevChangeValue(value);
         }
       } else {
-        autoNumeric.set(null);
-        setPrevChangeValue(undefined);
+        autoNumeric.set('');
       }
     }
   }, [value, autoNumeric, getValue]);
@@ -260,8 +258,8 @@ export const NumberField = ({
           <>
             {!InputProps?.readOnly && (
               <NumberFieldArrow
-                hide={!showArrow}
-                show={hover || focus}
+                hide={showArrow === false}
+                show={!!showArrow || hover || focus}
                 onUpClick={onUpClick}
                 onDownClick={onDownClick}
               />

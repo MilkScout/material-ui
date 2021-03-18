@@ -1,11 +1,13 @@
 {
-  "name": "milkscout-frontend",
+  "name": "milkscout-demo",
   "version": "1.0.0",
-  "description": "",
+  "homepage": "https://milkscout.github.io/material-ui/",
   "main": "index.js",
   "scripts": {
     "start": "SKIP_PREFLIGHT_CHECK=true && react-scripts start",
-    "build": "SKIP_PREFLIGHT_CHECK=true && react-scripts build "
+    "build": "SKIP_PREFLIGHT_CHECK=true && react-scripts build",
+    "postbuild": "npx st-cp build ../docs",
+    "prebuild": "npx st-rm-rf build ../docs"
   },
   "dependencies": {
     "@date-io/core": "^1.x",
