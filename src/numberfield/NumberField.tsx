@@ -55,7 +55,15 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
   }
 
   componentDidMount() {
-    const { value: currentValue } = this.props;
+    const { value: currentValue, step = DEFAULT_STEP_SIZE, min = MINIMUM_VALUE } = this.props;
+    if (step <= 0) {
+      // eslint-disable-next-line no-console
+      console.error(`Step have to be greater than 0 (step=${step})`);
+    }
+    if (min < 0) {
+      // eslint-disable-next-line no-console
+      console.error(`Minimum have to be greater equal than 0 (min=${min})`);
+    }
 
     this.inputRef.addEventListener('mouseover', this.onMouseOver);
     this.inputRef.addEventListener('mouseout', this.onMouseOut);
@@ -122,9 +130,9 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
           const updateValue = this.formatLeftSide(inputValue.substring(0, charIndex));
           this.inputRef.value = updateValue;
 
-          const newStartPosition = updateValue.length;
-
+          this.update();
           if (focus && !disabled && !InputProps?.readOnly) {
+            const newStartPosition = updateValue.length;
             this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
           }
         } else {
@@ -135,13 +143,13 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
             decimalCharacter +
             this.formatRightSide(inputValue.substring(charIndex + 1));
           this.inputRef.value = updateValue;
-          const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
 
+          this.update();
           if (focus && !disabled && !InputProps?.readOnly) {
+            const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
             this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
           }
         }
-        this.update();
         return true;
       }
     }
@@ -209,23 +217,43 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
   };
 
   onUpClick = () => {
-    const { step = DEFAULT_STEP_SIZE, disabled, InputProps } = this.props;
+    const { step = DEFAULT_STEP_SIZE, decimalPlaces = DEFAULT_DECIMAL_PLACES, disabled, InputProps } = this.props;
     if (!disabled && !InputProps?.readOnly) {
-      const newValue = (this.getValue() || 0) + step;
+      const multiplier = 10 ** decimalPlaces;
+      const newStep = Math.round(step * multiplier);
+      let newValue = Math.round((this.getValue() || 0) * multiplier);
+      const rest = newValue % newStep;
+      if (rest > 0) {
+        newValue = Math.round((1 + Math.floor(newValue / newStep)) * newStep);
+      } else {
+        newValue += newStep;
+      }
+      newValue /= multiplier;
+
       this.formatNumber(
         this.convertToStringValue(this.correctValue(newValue)),
         this.inputRef.selectionStart || 0,
         false,
         false,
       );
-      this.update();
     }
   };
 
   onDownClick = () => {
-    const { step = DEFAULT_STEP_SIZE, disabled, InputProps } = this.props;
+    const { step = DEFAULT_STEP_SIZE, decimalPlaces = DEFAULT_DECIMAL_PLACES, disabled, InputProps } = this.props;
     if (!disabled && !InputProps?.readOnly) {
-      const newValue = (this.getValue() || 0) - step;
+      const multiplier = 10 ** decimalPlaces;
+      const newStep = Math.round(step * multiplier);
+      let newValue = Math.round((this.getValue() || 0) * multiplier);
+      const rest = newValue % newStep;
+
+      if (rest > 0) {
+        newValue = Math.floor(newValue / newStep) * newStep;
+      } else {
+        newValue -= newStep;
+      }
+      newValue /= multiplier;
+
       this.convertToStringValue(this.correctValue(newValue));
       this.formatNumber(
         this.convertToStringValue(this.correctValue(newValue)),
@@ -233,7 +261,6 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
         false,
         false,
       );
-      this.update();
     }
   };
 
@@ -398,11 +425,9 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
                   show={!!showArrow || hover || focus}
                   onUpClick={() => {
                     this.onUpClick();
-                    this.update();
                   }}
                   onDownClick={() => {
                     this.onDownClick();
-                    this.update();
                   }}
                 />
               )}
