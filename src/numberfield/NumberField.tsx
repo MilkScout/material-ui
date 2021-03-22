@@ -96,8 +96,8 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
   };
 
   onBlur = () => {
-    this.formatNumber(this.inputRef.value, this.inputRef.selectionStart || 0, true);
     this.setState((prevState) => ({ ...prevState, focus: false }));
+    this.formatNumber(this.inputRef.value, this.inputRef.selectionStart || 0, true);
   };
 
   onInput = () => {
@@ -109,6 +109,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
   mobileKeyPressFix = () => {
     if (typeof this.lastKey !== 'undefined' && this.lastKey !== 46 && this.lastKey !== 8) {
       const inputValue = this.inputRef.value;
+      const { focus } = this.state;
       // Get cursor position
       const { selectionStart } = this.inputRef;
       const charIndex = (selectionStart || 0) - 1;
@@ -125,7 +126,9 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
 
         const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
 
-        this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
+        if (focus) {
+          this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
+        }
         this.update();
         return true;
       }
