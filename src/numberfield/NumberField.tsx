@@ -248,7 +248,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
       const rest = newValue % newStep;
 
       if (rest > 0) {
-        newValue = Math.floor(newValue / newStep) * newStep;
+        newValue = Math.round(Math.floor(newValue / newStep) * newStep);
       } else {
         newValue -= newStep;
       }
