@@ -119,7 +119,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
 
       if (lastChar === '.' || lastChar === ',') {
         if (decimalPlaces === 0) {
-          const updateValue = inputValue.substring(0, charIndex);
+          const updateValue = this.formatLeftSide(inputValue.substring(0, charIndex));
           this.inputRef.value = updateValue;
 
           const newStartPosition = updateValue.length;
@@ -135,7 +135,6 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
             decimalCharacter +
             this.formatRightSide(inputValue.substring(charIndex + 1));
           this.inputRef.value = updateValue;
-
           const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
 
           if (focus && !disabled && !InputProps?.readOnly) {
@@ -213,7 +212,12 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     const { step = DEFAULT_STEP_SIZE, disabled, InputProps } = this.props;
     if (!disabled && !InputProps?.readOnly) {
       const newValue = (this.getValue() || 0) + step;
-      this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
+      this.formatNumber(
+        this.convertToStringValue(this.correctValue(newValue)),
+        this.inputRef.selectionStart || 0,
+        false,
+        false,
+      );
       this.update();
     }
   };
@@ -223,7 +227,12 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     if (!disabled && !InputProps?.readOnly) {
       const newValue = (this.getValue() || 0) - step;
       this.convertToStringValue(this.correctValue(newValue));
-      this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
+      this.formatNumber(
+        this.convertToStringValue(this.correctValue(newValue)),
+        this.inputRef.selectionStart || 0,
+        false,
+        false,
+      );
       this.update();
     }
   };
@@ -262,7 +271,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     return Array(decimalPlaces + 1).join('0');
   };
 
-  formatNumber = (inputValue: string, caretStartPosition: number, isBlur = false) => {
+  formatNumber = (inputValue: string, caretStartPosition: number, isBlur = false, setSelection = true) => {
     const { decimalPlaces = DEFAULT_DECIMAL_PLACES, decimalCharacter = DEFAULT_DECIMAL_CHARACTER } = this.props;
 
     // appends $ to value, validates decimal side
@@ -289,19 +298,25 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
 
     // check for decimal
     if (decimalPosition >= 0) {
+      const isInDecimal = caretStartPosition > decimalPosition;
       // split number by decimal point
       let leftSideOfDecimal = inputValue.substring(0, decimalPosition);
       let rightSideOfDecimal = inputValue.substring(decimalPosition + 1);
 
       // add commas to left side of number
-      leftSideOfDecimal = this.formatLeftSide(leftSideOfDecimal) || '0';
+      leftSideOfDecimal = this.formatLeftSide(leftSideOfDecimal);
 
       // validate right side
       rightSideOfDecimal = this.formatRightSide(rightSideOfDecimal);
 
       // On blur make sure 2 numbers after decimal
       if (isBlur) {
+        leftSideOfDecimal = leftSideOfDecimal || '0';
         rightSideOfDecimal += zeroPadding;
+      }
+
+      if (isInDecimal) {
+        caretStartPosition += 1;
       }
 
       // Limit decimal to only 2 digits
@@ -324,7 +339,6 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
 
     // send updated string to input
     this.inputRef.value = inputValue;
-    this.setState((prevState) => ({ ...prevState, innerValue: inputValue }));
 
     // put caret back in the right position
     const updateLength = inputValue.length;
@@ -334,10 +348,11 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     const { disabled, InputProps } = this.props;
 
     // fix for safari
-    if (focus && !disabled && !InputProps?.readOnly) {
+    if (focus && !disabled && !InputProps?.readOnly && setSelection) {
       this.inputRef.setSelectionRange(caretStartPosition, caretStartPosition);
     }
 
+    this.setState((prevState) => ({ ...prevState, innerValue: inputValue }));
     this.update();
   };
 

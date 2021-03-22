@@ -1,6 +1,6 @@
 {
   "name": "@milkscout/material-ui",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "main": "index.js",
   "repository": "git@github.com:MilkScout/material-ui.git",
   "author": "Michael Mannseicher <m.mansi1@gmx.net>",
