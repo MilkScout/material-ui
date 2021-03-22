@@ -143,13 +143,6 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@types/cleave.js@^1.4.4":
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/@types/cleave.js/-/cleave.js-1.4.4.tgz#66f0ee5218283f2c9623c49074eb3f34333952ac"
-  integrity sha512-uYFjWMPSBGBfbgfPna6yDenevtDSgqfkDXb/3dct6DXHiFs3InI3fpw51wb94zW8kHcNh1MUadboN55RAvSLEw==
-  dependencies:
-    "@types/react" "*"
-
 "@types/json-schema@^7.0.3":
   version "7.0.7"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.7.tgz#98a993516c859eb0d5c4c8f098317a9ea68db9ad"

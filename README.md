@@ -16,12 +16,11 @@ peer dependency => react, material-ui
 ###NumberField
 An Field that composite an textfield https://material-ui.com/components/text-fields/#text-field.
 
-The type of the textfield is freezed to "text". All other attributes are like the from material-ui. Under the hood we
-use http://autonumeric.org/. Because the input is forced to be type="text", there will be a chrome like replacement for arrows.
+The input type is forced to type="text", there will be a chrome like replacement for arrows.
 
 
 Hints
-   - on minus or plus click on keyboard the sign changes
+   - no negative numbers supported, because smartphone numbers dont have an minus
    - does not contain validation 
 
 Events are overridden:
@@ -51,7 +50,7 @@ Additional attributes:
 </tr>
 <tr>
     <td>decimalPlaces</td>
-    <td>0, 1, 2, 3, 4, 5, 6, number</td>
+    <td>number</td>
     <td>optional</td>
     <td>2</td>
     <td>The amount of decimal digits</td>
@@ -69,20 +68,6 @@ Additional attributes:
     <td>optional</td>
     <td>','</td>
     <td>The thousand group character, can also be empty</td>
-</tr>
-<tr>
-    <td>decimalPlacesShownOnBlur</td>
-    <td>number</td>
-    <td>optional</td>
-    <td>null</td>
-    <td>If component blur show an different amount of</td>
-</tr>
-<tr>
-    <td>modifyValueOnWheel</td>
-    <td>boolean</td>
-    <td>optional</td>
-    <td>false</td>
-    <td>Modify number field by mouse wheel, not tested</td>
 </tr>
 <tr>
     <td>showArrow</td>

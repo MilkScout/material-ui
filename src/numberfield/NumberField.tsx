@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import AutoNumeric from 'autonumeric';
+/* eslint-disable react/jsx-no-duplicate-props */
+import React, { Component } from 'react';
 import { TextField } from '@material-ui/core';
 import { TextFieldProps as OriginalTextFieldProps } from '@material-ui/core/TextField/TextField';
 import { NumberFieldArrow } from './NumberFieldArrow';
@@ -10,8 +10,6 @@ export interface NumberFieldProps extends TextFieldProps {
   allowDecimalPadding?: boolean;
   decimalCharacter?: string;
   thousandCharacter?: string;
-  decimalPlacesShownOnBlur?: number | null;
-  modifyValueOnWheel?: boolean;
   showArrow?: boolean;
   min?: number;
   max?: number;
@@ -24,253 +22,353 @@ export type TextFieldProps = Omit<
 > &
   Partial<{
     onChange: (value: number | undefined) => void;
-    onFocus: (value: number | undefined) => void;
-    onBlur: (value: number | undefined) => void;
-    onKeyPress: (value: number | undefined) => void;
-    onKeyUp: (value: number | undefined) => void;
-    onKeyDown: (value: number | undefined) => void;
     variant?: 'outlined' | 'filled' | 'standard';
   }>;
 
-export const NumberField = ({
-  classes,
-  onChange = () => {},
-  onFocus = () => {},
-  onBlur = () => {},
-  onKeyPress = () => {},
-  onKeyUp = () => {},
-  onKeyDown = () => {},
-  value,
-  InputProps,
-  decimalPlaces = 2,
-  allowDecimalPadding = false,
-  decimalPlacesShownOnBlur = null,
-  modifyValueOnWheel = false,
-  showArrow,
-  decimalCharacter = '.',
-  thousandCharacter = ',',
-  InputLabelProps,
-  variant,
-  min,
-  max,
-  step = 1,
-  ...othersProps
-}: NumberFieldProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [autoNumeric, setAutoNumeric] = useState<AutoNumeric | undefined>(undefined);
-  const [prevChangeValue, setPrevChangeValue] = useState<number | undefined>(value);
-  const [innerValue, setInnerValue] = useState<number | undefined>(value);
-  const [hover, setHover] = useState<boolean>(false);
-  const [focus, setFocus] = useState<boolean>(false);
+interface NumberFieldState {
+  focus: boolean;
+  hover: boolean;
+  innerValue: string;
+}
 
-  const onMouseOver = useCallback(() => {
-    if (!hover) {
-      setHover(true);
-    }
-  }, [hover, setHover]);
-  const onMouseOut = useCallback(() => {
-    if (hover) {
-      setHover(false);
-    }
-  }, [hover, setHover]);
+export const DEFAULT_DECIMAL_CHARACTER = '.';
+export const DEFAULT_THOUSAND_CHARACTER = ',';
+export const DEFAULT_DECIMAL_PLACES = 2;
+export const DEFAULT_STEP_SIZE = 1;
 
-  const onInputFocus = useCallback(() => {
-    if (!focus) {
-      setFocus(true);
-    }
-  }, [setFocus, focus]);
+export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
+  private inputRef!: HTMLInputElement;
 
-  const onInputBlur = useCallback(() => {
-    if (focus) {
-      setFocus(false);
-    }
-  }, [setFocus, focus]);
+  private changeValue!: number | undefined;
 
-  useEffect(() => {
-    const { current } = inputRef;
-    if (current) {
-      current.addEventListener('mouseover', onMouseOver);
-      current.addEventListener('mouseout', onMouseOut);
-      current.addEventListener('focus', onInputFocus);
-      current.addEventListener('blur', onInputBlur);
-    }
-    return () => {
-      if (current) {
-        current.removeEventListener('mouseover', onMouseOver);
-        current.removeEventListener('mouseout', onMouseOut);
-        current.removeEventListener('focus', onInputFocus);
-        current.removeEventListener('blur', onInputBlur);
-      }
+  private lastKey!: number | undefined;
+
+  constructor(props: NumberFieldProps) {
+    super(props);
+    this.state = {
+      hover: false,
+      focus: false,
+      innerValue: '',
     };
-  }, [inputRef, onMouseOut, onMouseOver]);
+    this.changeValue = props.value;
+  }
 
-  useEffect(() => {
-    if (inputRef.current && typeof autoNumeric === 'undefined') {
-      setAutoNumeric(
-        new AutoNumeric(inputRef.current, value, {
-          outputFormat: 'number',
-          decimalPlaces,
-          digitGroupSeparator: thousandCharacter,
-          decimalCharacter,
-          decimalPlacesShownOnBlur,
-          modifyValueOnWheel,
-        }),
-      );
+  componentDidMount() {
+    const { value: currentValue } = this.props;
+
+    this.inputRef.addEventListener('mouseover', this.onMouseOver);
+    this.inputRef.addEventListener('mouseout', this.onMouseOut);
+    this.inputRef.addEventListener('focus', this.onFocus);
+    this.inputRef.addEventListener('blur', this.onBlur);
+    this.inputRef.addEventListener('keydown', this.onKeyDown);
+    this.inputRef.addEventListener('input', this.onInput);
+    this.formatNumber(this.convertToStringValue(currentValue), 0);
+  }
+
+  componentDidUpdate() {
+    const { value: currentValue } = this.props;
+    if (this.changeValue !== currentValue) {
+      this.formatNumber(this.convertToStringValue(currentValue), this.inputRef.selectionStart || 0);
+      this.changeValue = currentValue;
     }
-  }, [
-    autoNumeric,
-    decimalCharacter,
-    decimalPlaces,
-    allowDecimalPadding,
-    thousandCharacter,
-    setAutoNumeric,
-    decimalPlacesShownOnBlur,
-    modifyValueOnWheel,
-    value,
-  ]);
+  }
 
-  const getValue = useCallback(() => {
-    const { current } = inputRef;
-    if (autoNumeric && current) {
-      const rawValue = autoNumeric.getNumber();
-      if (rawValue !== null && current.value !== '') {
-        return rawValue;
+  componentWillUnmount() {
+    this.inputRef.removeEventListener('mouseover', this.onMouseOver);
+    this.inputRef.removeEventListener('mouseout', this.onMouseOut);
+    this.inputRef.removeEventListener('focus', this.onFocus);
+    this.inputRef.removeEventListener('blur', this.onBlur);
+    this.inputRef.removeEventListener('keydown', this.onKeyDown);
+    this.inputRef.removeEventListener('input', this.onInput);
+  }
+
+  onMouseOver = () => {
+    this.setState((prevState) => ({ ...prevState, hover: true }));
+  };
+
+  onMouseOut = () => {
+    this.setState((prevState) => ({ ...prevState, hover: false }));
+  };
+
+  onFocus = () => {
+    this.setState((prevState) => ({ ...prevState, focus: true }));
+  };
+
+  onBlur = () => {
+    this.formatNumber(this.inputRef.value, this.inputRef.selectionStart || 0, true);
+    this.setState((prevState) => ({ ...prevState, focus: false }));
+  };
+
+  onInput = () => {
+    if (!this.mobileKeyPressFix()) {
+      this.formatNumber(this.inputRef.value, this.inputRef.selectionStart || 0);
+    }
+  };
+
+  mobileKeyPressFix = () => {
+    if (typeof this.lastKey !== 'undefined' && this.lastKey !== 46 && this.lastKey !== 8) {
+      const inputValue = this.inputRef.value;
+      // Get cursor position
+      const { selectionStart } = this.inputRef;
+      const charIndex = (selectionStart || 0) - 1;
+      const lastChar = String.fromCharCode(inputValue.charCodeAt(charIndex));
+
+      if (lastChar === '.' || lastChar === ',') {
+        const { decimalCharacter = DEFAULT_DECIMAL_CHARACTER } = this.props;
+
+        const updateValue =
+          this.formatLeftSide(inputValue.substring(0, charIndex) || '0') +
+          decimalCharacter +
+          this.formatRightSide(inputValue.substring(charIndex + 1));
+        this.inputRef.value = updateValue;
+
+        const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
+
+        this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
+        this.update();
+        return true;
+      }
+      return false;
+    }
+  };
+
+  getValue = (): number | undefined => {
+    const { decimalCharacter = DEFAULT_DECIMAL_CHARACTER } = this.props;
+    const inputValue = this.inputRef.value;
+    if (inputValue === '') {
+      return undefined;
+    }
+    if (inputValue.indexOf(decimalCharacter) >= 0) {
+      const decimalPosition = inputValue.indexOf(decimalCharacter);
+
+      const leftSideOfDecimal = inputValue.substring(0, decimalPosition).replace(/\D/g, '');
+      const rightSideOfDecimal = inputValue.substring(decimalPosition).replace(/\D/g, '');
+      return parseFloat(`${leftSideOfDecimal}.${rightSideOfDecimal}`);
+    }
+    return parseFloat(inputValue.replace(/\D/g, ''));
+  };
+
+  correctValue = (corValue: number): number | undefined => {
+    const { min = MINIMUM_VALUE, max } = this.props;
+    let newValue = corValue;
+
+    // if newValue is smaller than min set min value
+    if (newValue < min || newValue < MINIMUM_VALUE) {
+      newValue = min;
+    }
+    // if newValue is bigger than max value
+    if (typeof max !== 'undefined' && max < newValue) {
+      newValue = max;
+    }
+
+    return newValue;
+  };
+
+  convertToStringValue = (value: number | undefined): string => {
+    const { decimalCharacter = DEFAULT_DECIMAL_CHARACTER, decimalPlaces = DEFAULT_DECIMAL_PLACES } = this.props;
+    let innerValue = '';
+    if (typeof value !== 'undefined') {
+      const stringValue = value.toFixed(decimalPlaces);
+      const decimalPosition = stringValue.indexOf('.');
+      if (decimalPosition >= 0) {
+        const leftSideOfDecimal = stringValue.substring(0, decimalPosition);
+        const rightSideOfDecimal = stringValue.substring(decimalPosition + 1);
+        innerValue = leftSideOfDecimal + decimalCharacter + rightSideOfDecimal;
+      } else {
+        innerValue = stringValue;
       }
     }
-    return undefined;
-  }, [autoNumeric, inputRef]);
+    this.setState((prevState) => ({ ...prevState, innerValue }));
+    return innerValue;
+  };
 
-  const setValue = useCallback(
-    (newValue: number | undefined) => {
-      if (autoNumeric) {
-        if (typeof newValue !== 'undefined' && !Number.isNaN(newValue)) {
-          if (newValue < 10000000000000 && newValue > -10000000000000) {
-            autoNumeric.set(newValue);
-            setInnerValue(newValue);
-          }
-        } else {
-          autoNumeric.set('');
-          setInnerValue(undefined);
-        }
-      }
-    },
-    [autoNumeric],
-  );
+  update = () => {
+    const { onChange = () => {} } = this.props;
+    const currentValue = this.getValue();
 
-  useEffect(() => {
-    if (autoNumeric && getValue() !== value) {
-      setValue(value);
-    }
-  }, [value, autoNumeric, getValue]);
-
-  const correctValue = useCallback(
-    (corValue: number) => {
-      let newValue = corValue;
-
-      // if newValue is smaller than min set min value
-      if (typeof min !== 'undefined' && newValue < min) {
-        newValue = min;
-      }
-      // if newValue is bigger than max value
-      if (typeof max !== 'undefined' && max < newValue) {
-        newValue = max;
-      }
-      return newValue;
-    },
-    [max, min],
-  );
-
-  const onInnerChange = useCallback(() => {
-    const currentValue = getValue();
-    if (prevChangeValue !== currentValue) {
-      setPrevChangeValue(currentValue);
+    if (this.changeValue !== currentValue) {
+      this.changeValue = currentValue;
       onChange(currentValue);
     }
-  }, [onChange, setPrevChangeValue, prevChangeValue, getValue]);
+  };
 
-  const onUpClick = useCallback(() => {
-    const newValue = (getValue() || 0) + step;
-    setValue(correctValue(newValue));
-    onInnerChange();
-  }, [correctValue, getValue, setValue, step]);
+  onUpClick = () => {
+    const { step = DEFAULT_STEP_SIZE } = this.props;
+    const newValue = (this.getValue() || 0) + step;
+    this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
+    this.update();
+  };
 
-  const onDownClick = useCallback(() => {
-    const newValue = getValue() || 0;
-    setValue(correctValue(newValue - step));
-    onInnerChange();
-  }, [correctValue, getValue, setValue, step]);
+  onDownClick = () => {
+    const { step = DEFAULT_STEP_SIZE } = this.props;
+    const newValue = (this.getValue() || 0) - step;
+    this.convertToStringValue(this.correctValue(newValue));
+    this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
+    this.update();
+  };
 
-  const onInputKeyDown = useCallback(
-    (event: any) => {
-      const { key } = event;
-      switch (key) {
-        case '+':
-          if (typeof min !== 'undefined' && min >= 0) {
-            event.preventDefault();
-          }
-          break;
-        case '-':
-          if (typeof min !== 'undefined' && min >= 0) {
-            event.preventDefault();
-          }
-          break;
-        case 'ArrowUp':
-          event.preventDefault();
-          onUpClick();
-          break;
-        case 'ArrowDown':
-          event.preventDefault();
-          onDownClick();
-          break;
-        default:
-      }
-    },
-    [correctValue, onDownClick, onUpClick, min],
-  );
+  onKeyDown = (event: any) => {
+    const { key, which, keyCode } = event;
+    this.lastKey = which || keyCode;
 
-  useEffect(() => {
-    const { current } = inputRef;
-    if (current) {
-      current.addEventListener('keydown', onInputKeyDown);
+    switch (key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.onDownClick();
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.onUpClick();
+        break;
+      default:
+        break;
     }
-    return () => {
-      if (current) {
-        current.removeEventListener('keydown', onInputKeyDown);
+  };
+
+  formatLeftSide = (number: string) => {
+    const { thousandCharacter = DEFAULT_THOUSAND_CHARACTER } = this.props;
+    let parsedNumber = number.replace(/\D/g, '');
+    if (parsedNumber !== '') {
+      parsedNumber = `${parseInt(parsedNumber, 10)}`;
+    }
+    return parsedNumber.replace(/\B(?=(\d{3})+(?!\d))/g, thousandCharacter);
+  };
+
+  formatRightSide = (number: string) => number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '');
+
+  getZeroPadding = (): string => {
+    const { decimalPlaces = DEFAULT_DECIMAL_PLACES } = this.props;
+    return Array(decimalPlaces + 1).join('0');
+  };
+
+  formatNumber = (inputValue: string, caretStartPosition: number, isBlur = false) => {
+    const { decimalPlaces = DEFAULT_DECIMAL_PLACES, decimalCharacter = DEFAULT_DECIMAL_CHARACTER } = this.props;
+
+    // appends $ to value, validates decimal side
+    // and puts cursor back in right position.
+
+    // don't validate empty input
+    if (inputValue === '') {
+      this.inputRef.value = '';
+      this.setState((prevState) => ({ ...prevState, innerValue: '' }));
+      this.update();
+      return;
+    }
+
+    // original length
+    const originalLength = inputValue.length;
+
+    // initial caret position
+    const zeroPadding = this.getZeroPadding();
+
+    // get position of first decimal
+    // this prevents multiple decimals from
+    // being entered
+    const decimalPosition = inputValue.indexOf(decimalCharacter);
+
+    // check for decimal
+    if (decimalPosition >= 0) {
+      // split number by decimal point
+      let leftSideOfDecimal = inputValue.substring(0, decimalPosition);
+      let rightSideOfDecimal = inputValue.substring(decimalPosition + 1);
+
+      // add commas to left side of number
+      leftSideOfDecimal = this.formatLeftSide(leftSideOfDecimal) || '0';
+
+      // validate right side
+      rightSideOfDecimal = this.formatRightSide(rightSideOfDecimal);
+
+      // On blur make sure 2 numbers after decimal
+      if (isBlur) {
+        rightSideOfDecimal += zeroPadding;
       }
-    };
-  }, [inputRef, onInputKeyDown]);
-  return (
-    <TextField
-      type="text"
-      inputRef={inputRef}
-      onChange={() => onInnerChange()}
-      onFocus={() => onFocus(getValue())}
-      onBlur={() => onBlur(getValue())}
-      onKeyPress={() => onKeyPress(getValue())}
-      onKeyUp={() => onKeyUp(getValue())}
-      onKeyDown={() => onKeyDown(getValue())}
-      variant={variant}
-      InputLabelProps={{
-        shrink: typeof innerValue !== 'undefined',
-        ...InputLabelProps,
-      }}
-      InputProps={{
-        ...InputProps,
-        endAdornment: (
-          <>
-            {!InputProps?.readOnly && (
-              <NumberFieldArrow
-                hide={showArrow === false}
-                show={!!showArrow || hover || focus}
-                onUpClick={onUpClick}
-                onDownClick={onDownClick}
-              />
-            )}
-            {!!InputProps?.endAdornment && <>{InputProps.endAdornment}</>}
-          </>
-        ),
-      }}
-      {...othersProps}
-    />
-  );
-};
+
+      // Limit decimal to only 2 digits
+      rightSideOfDecimal = rightSideOfDecimal.substring(0, decimalPlaces);
+
+      // join number by .
+      inputValue = `${leftSideOfDecimal}${decimalCharacter}${rightSideOfDecimal}`;
+    } else {
+      // no decimal entered
+      // add commas to number
+      // remove all non-digits
+      inputValue = this.formatLeftSide(inputValue);
+      inputValue = `${inputValue}`;
+
+      // final formatting
+      if (isBlur && decimalPlaces > 0) {
+        inputValue += decimalCharacter + zeroPadding;
+      }
+    }
+
+    // send updated string to input
+    this.inputRef.value = inputValue;
+    this.setState((prevState) => ({ ...prevState, innerValue: inputValue }));
+
+    // put caret back in the right position
+    const updateLength = inputValue.length;
+    caretStartPosition = updateLength - originalLength + caretStartPosition;
+    this.inputRef.setSelectionRange(caretStartPosition, caretStartPosition);
+
+    this.update();
+  };
+
+  render = () => {
+    const {
+      onChange,
+      value,
+      decimalPlaces = DEFAULT_DECIMAL_PLACES,
+      decimalCharacter,
+      thousandCharacter,
+      variant,
+      inputProps,
+      InputProps,
+      showArrow,
+      InputLabelProps,
+      ...otherProps
+    } = this.props;
+    const { hover, focus, innerValue } = this.state;
+    return (
+      <TextField
+        type="text"
+        inputRef={(ref) => {
+          this.inputRef = ref;
+        }}
+        variant={variant}
+        InputLabelProps={{
+          ...InputLabelProps,
+          shrink: focus || innerValue !== '',
+        }}
+        inputProps={{
+          ...inputProps,
+          inputMode: decimalPlaces <= 0 ? 'numeric' : 'decimal',
+        }}
+        InputProps={{
+          ...InputProps,
+          endAdornment: (
+            <>
+              {!InputProps?.readOnly && (
+                <NumberFieldArrow
+                  hide={showArrow === false}
+                  show={!!showArrow || hover || focus}
+                  onUpClick={() => {
+                    this.onUpClick();
+                    this.update();
+                  }}
+                  onDownClick={() => {
+                    this.onDownClick();
+                    this.update();
+                  }}
+                />
+              )}
+              {!!InputProps?.endAdornment && <>{InputProps.endAdornment}</>}
+            </>
+          ),
+        }}
+        {...otherProps}
+      />
+    );
+  };
+}
+
+export const MINIMUM_VALUE = 0;
