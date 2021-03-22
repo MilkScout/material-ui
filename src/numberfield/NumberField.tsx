@@ -107,29 +107,40 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     }
   };
 
-  mobileKeyPressFix = () => {
+  mobileKeyPressFix = (): boolean => {
     if (typeof this.lastKey !== 'undefined' && this.lastKey !== 46 && this.lastKey !== 8) {
       const inputValue = this.inputRef.value;
       const { focus } = this.state;
-      const { disabled, InputProps } = this.props;
+      const { disabled, InputProps, decimalPlaces } = this.props;
       // Get cursor position
       const { selectionStart } = this.inputRef;
       const charIndex = (selectionStart || 0) - 1;
       const lastChar = String.fromCharCode(inputValue.charCodeAt(charIndex));
 
       if (lastChar === '.' || lastChar === ',') {
-        const { decimalCharacter = DEFAULT_DECIMAL_CHARACTER } = this.props;
+        if (decimalPlaces === 0) {
+          const updateValue = inputValue.substring(0, charIndex);
+          this.inputRef.value = updateValue;
 
-        const updateValue =
-          this.formatLeftSide(inputValue.substring(0, charIndex) || '0') +
-          decimalCharacter +
-          this.formatRightSide(inputValue.substring(charIndex + 1));
-        this.inputRef.value = updateValue;
+          const newStartPosition = updateValue.length;
 
-        const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
+          if (focus && !disabled && !InputProps?.readOnly) {
+            this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
+          }
+        } else {
+          const { decimalCharacter = DEFAULT_DECIMAL_CHARACTER } = this.props;
 
-        if (focus && !disabled && !InputProps?.readOnly) {
-          this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
+          const updateValue =
+            this.formatLeftSide(inputValue.substring(0, charIndex) || '0') +
+            decimalCharacter +
+            this.formatRightSide(inputValue.substring(charIndex + 1));
+          this.inputRef.value = updateValue;
+
+          const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
+
+          if (focus && !disabled && !InputProps?.readOnly) {
+            this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
+          }
         }
         this.update();
         return true;

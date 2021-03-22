@@ -21,6 +21,7 @@ export const App = () => {
       <div className="Container">
         <div className="Text">Uncontrolled value</div>
         <NumberField
+          decimalPlaces={0}
           className="Numberfield"
           InputProps={{
             endAdornment: <InputAdornment position="end">kg</InputAdornment>,
