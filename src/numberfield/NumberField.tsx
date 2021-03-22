@@ -66,9 +66,10 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     this.formatNumber(this.convertToStringValue(currentValue), 0);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Readonly<NumberFieldProps>) {
     const { value: currentValue } = this.props;
-    if (this.changeValue !== currentValue) {
+    const { value: lastValue } = prevProps;
+    if (this.changeValue !== currentValue && currentValue !== lastValue) {
       this.formatNumber(this.convertToStringValue(currentValue), this.inputRef.selectionStart || 0);
       this.changeValue = currentValue;
     }

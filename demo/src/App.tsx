@@ -19,14 +19,12 @@ export const App = () => {
         <div>Render amount: {render}</div>
       </div>
       <div className="Container">
-        <div className="Text">Default NumberField with end adroment</div>
+        <div className="Text">Uncontrolled value</div>
         <NumberField
           className="Numberfield"
-          value={value}
           InputProps={{
             endAdornment: <InputAdornment position="end">kg</InputAdornment>,
           }}
-          onChange={(newValue) => setValue(newValue)}
         />
       </div>
       <div className="Container">
