@@ -110,6 +110,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     if (typeof this.lastKey !== 'undefined' && this.lastKey !== 46 && this.lastKey !== 8) {
       const inputValue = this.inputRef.value;
       const { focus } = this.state;
+      const { disabled, InputProps } = this.props;
       // Get cursor position
       const { selectionStart } = this.inputRef;
       const charIndex = (selectionStart || 0) - 1;
@@ -126,7 +127,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
 
         const newStartPosition = updateValue.indexOf(decimalCharacter) + 1;
 
-        if (focus) {
+        if (focus && !disabled && !InputProps?.readOnly) {
           this.inputRef.setSelectionRange(newStartPosition, newStartPosition);
         }
         this.update();
@@ -197,18 +198,22 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
   };
 
   onUpClick = () => {
-    const { step = DEFAULT_STEP_SIZE } = this.props;
-    const newValue = (this.getValue() || 0) + step;
-    this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
-    this.update();
+    const { step = DEFAULT_STEP_SIZE, disabled, InputProps } = this.props;
+    if (!disabled && !InputProps?.readOnly) {
+      const newValue = (this.getValue() || 0) + step;
+      this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
+      this.update();
+    }
   };
 
   onDownClick = () => {
-    const { step = DEFAULT_STEP_SIZE } = this.props;
-    const newValue = (this.getValue() || 0) - step;
-    this.convertToStringValue(this.correctValue(newValue));
-    this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
-    this.update();
+    const { step = DEFAULT_STEP_SIZE, disabled, InputProps } = this.props;
+    if (!disabled && !InputProps?.readOnly) {
+      const newValue = (this.getValue() || 0) - step;
+      this.convertToStringValue(this.correctValue(newValue));
+      this.formatNumber(this.convertToStringValue(this.correctValue(newValue)), this.inputRef.selectionStart || 0);
+      this.update();
+    }
   };
 
   onKeyDown = (event: any) => {
@@ -314,9 +319,10 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     caretStartPosition = updateLength - originalLength + caretStartPosition;
 
     const { focus } = this.state;
+    const { disabled, InputProps } = this.props;
 
     // fix for safari
-    if (focus) {
+    if (focus && !disabled && !InputProps?.readOnly) {
       this.inputRef.setSelectionRange(caretStartPosition, caretStartPosition);
     }
 
@@ -327,6 +333,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     const {
       onChange,
       value,
+      disabled,
       decimalPlaces = DEFAULT_DECIMAL_PLACES,
       decimalCharacter,
       thousandCharacter,
@@ -344,6 +351,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
         inputRef={(ref) => {
           this.inputRef = ref;
         }}
+        disabled={disabled}
         variant={variant}
         InputLabelProps={{
           ...InputLabelProps,
@@ -357,7 +365,7 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
           ...InputProps,
           endAdornment: (
             <>
-              {!InputProps?.readOnly && (
+              {!InputProps?.readOnly && !disabled && (
                 <NumberFieldArrow
                   hide={showArrow === false}
                   show={!!showArrow || hover || focus}

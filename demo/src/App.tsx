@@ -81,6 +81,36 @@ export const App = () => {
           onChange={setValue}
         />
       </div>
+      <div className="Container">
+        <div className="Text">Readonly</div>
+        <NumberField
+          label={'MilkScout'}
+          className="Numberfield"
+          value={value}
+          showArrow={true}
+          step={100}
+          InputProps={{
+            readOnly: true,
+            endAdornment: <InputAdornment position="end">€</InputAdornment>,
+          }}
+          onChange={setValue}
+        />
+      </div>
+      <div className="Container">
+        <div className="Text">Disabled</div>
+        <NumberField
+          label={'MilkScout'}
+          className="Numberfield"
+          value={value}
+          showArrow={true}
+          step={100}
+          disabled={true}
+          InputProps={{
+            endAdornment: <InputAdornment position="end">€</InputAdornment>,
+          }}
+          onChange={setValue}
+        />
+      </div>
     </div>
   );
 };
