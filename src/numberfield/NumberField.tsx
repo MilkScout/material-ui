@@ -35,6 +35,7 @@ export const DEFAULT_DECIMAL_CHARACTER = '.';
 export const DEFAULT_THOUSAND_CHARACTER = ',';
 export const DEFAULT_DECIMAL_PLACES = 2;
 export const DEFAULT_STEP_SIZE = 1;
+export const MINIMUM_VALUE = 0;
 
 export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
   private inputRef!: HTMLInputElement;
@@ -128,8 +129,8 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
         this.update();
         return true;
       }
-      return false;
     }
+    return false;
   };
 
   getValue = (): number | undefined => {
@@ -308,7 +309,13 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     // put caret back in the right position
     const updateLength = inputValue.length;
     caretStartPosition = updateLength - originalLength + caretStartPosition;
-    this.inputRef.setSelectionRange(caretStartPosition, caretStartPosition);
+
+    const { focus } = this.state;
+
+    // fix for safari
+    if (focus) {
+      this.inputRef.setSelectionRange(caretStartPosition, caretStartPosition);
+    }
 
     this.update();
   };
@@ -370,5 +377,3 @@ export class NumberField extends Component<NumberFieldProps, NumberFieldState> {
     );
   };
 }
-
-export const MINIMUM_VALUE = 0;
